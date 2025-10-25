@@ -1,0 +1,223 @@
+{% extends 'base_doctor.html' %}
+{% block title %}مركز التقارير المتكامل{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .report-link {
+            transition: background-color 0.2s;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .report-link.active-item {
+            background-color: #e6e9ff !important;
+            border-right: 4px solid #6a1b9a;
+            font-weight: bold;
+        }
+        #chart-container {
+            position: relative;
+            height: 450px;
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h3 class="text-center mb-5" style="color: #6a1b9a;">مركز التقارير المتكامل 📊</h3>
+
+    <div class="row">
+        <!-- العمود الأيسر (أنواع التقارير) -->
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4 p-3" style="border-radius: 10px;">
+                <h5 style="color: #d16ba5;"><i class="fas fa-filter me-2"></i> نوع التقرير</h5>
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action fw-bold active"
+                       data-type="daily"
+                       onclick="loadReportList('daily', this); return false;">
+                       <i class="fas fa-sun me-2"></i> تقارير يومية
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action fw-bold"
+                       data-type="weekly"
+                       onclick="loadReportList('weekly', this); return false;">
+                       <i class="fas fa-calendar-week me-2"></i> تقارير أسبوعية
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action fw-bold"
+                       data-type="monthly"
+                       onclick="loadReportList('monthly', this); return false;">
+                       <i class="fas fa-calendar-alt me-2"></i> تقارير شهرية
+                    </a>
+                </div>
+            </div>
+
+            <h5 class="mt-4" style="color: #d16ba5;"><i class="fas fa-list me-2"></i> التقارير المتاحة</h5>
+            <div class="list-group" id="report-items-list">
+                <div class="p-3 text-muted border rounded">الرجاء اختيار نوع تقرير...</div>
+            </div>
+        </div>
+
+        <!-- العمود الأيمن (العرض البياني) -->
+        <div class="col-md-9">
+            <div class="card shadow p-4 rounded" style="border-radius: 10px;">
+                <h4 id="chart-title" style="color: #a64ca6;">الرجاء اختيار تقرير</h4>
+                <hr>
+
+                <div id="chart-container">
+                    <canvas id="myReportChart"></canvas>
+                </div>
+
+                <div id="no-data-message" class="alert alert-warning text-center mt-3" style="display: none;">
+                    لا توجد بيانات متوفرة لهذا التقرير أو الفترة.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentChart = null;
+
+    // ✅ أخذ child_id من Flask مباشرة
+    let currentChildId = {{ child.child_id | tojson if child else 'null' }};
+    let currentReportType = 'daily';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("✅ Loaded doctor report page for child_id:", currentChildId);
+
+        if (currentChildId) {
+            // تحميل التقارير اليومية مباشرة
+            loadReportList(currentReportType, document.querySelector('[data-type="daily"]'));
+        } else {
+            document.getElementById('chart-title').textContent = "لا يوجد أطفال مسجلون.";
+        }
+    });
+
+    // ----------------------------------------
+    // دالة جلب قائمة التقارير
+    // ----------------------------------------
+    function loadReportList(reportType, element) {
+        currentReportType = reportType;
+
+        document.querySelectorAll('.list-group-item-action').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        const listContainer = document.getElementById('report-items-list');
+        listContainer.innerHTML = '<div class="p-3 text-center text-info"><i class="fas fa-spinner fa-spin me-2"></i> جاري التحميل...</div>';
+
+        if (!currentChildId) {
+            listContainer.innerHTML = '<div class="p-3 text-muted border rounded">يجب اختيار طفل أولاً.</div>';
+            return;
+        }
+
+        // ✅ جلب التقارير الخاصة بالطفل
+        fetch(`/api/report/list/${reportType}?child_id=${currentChildId}`)
+            .then(response => response.json())
+            .then(data => {
+                listContainer.innerHTML = '';
+                document.getElementById('chart-title').textContent = data.title;
+
+                if (!data.items || data.items.length === 0) {
+                    listContainer.innerHTML = '<div class="p-3 text-muted border rounded">لا توجد تقارير مسجلة في هذه الفترة.</div>';
+                    if (currentChart) { currentChart.destroy(); currentChart = null; }
+                    return;
+                }
+
+                data.items.forEach(item => {
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.className = 'list-group-item list-group-item-action report-link';
+                    link.textContent = item.title;
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        loadReportChart(reportType, item.id, item.child_id, link);
+                    };
+                    listContainer.appendChild(link);
+                });
+
+                // عرض أول تقرير تلقائيًا
+                const firstLink = listContainer.querySelector('a');
+                if (firstLink) {
+                    loadReportChart(reportType, data.items[0].id, data.items[0].child_id, firstLink);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error loading report list:', error);
+                listContainer.innerHTML = '<div class="p-3 text-danger border rounded">حدث خطأ أثناء تحميل القائمة.</div>';
+            });
+    }
+
+    // ----------------------------------------
+    // دالة تحميل بيانات التقرير وعرضها بالرسم البياني
+    // ----------------------------------------
+    function loadReportChart(reportType, reportId, childId, linkElement) {
+        document.querySelectorAll('.report-link').forEach(el => el.classList.remove('active-item'));
+        linkElement.classList.add('active-item');
+
+        document.getElementById('no-data-message').style.display = 'none';
+        document.getElementById('chart-title').textContent = linkElement.textContent;
+        document.getElementById('chart-container').style.opacity = '0.5';
+
+        fetch(`/api/report/data/${reportType}/${reportId}/${childId}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => Promise.reject(data));
+                }
+                return response.json();
+            })
+            .then(chartData => {
+                document.getElementById('chart-container').style.opacity = '1';
+                if (currentChart) currentChart.destroy();
+
+                const ctx = document.getElementById('myReportChart').getContext('2d');
+                const chartType = (reportType === 'daily') ? 'bar' : 'line';
+                const labelText = (reportType === 'daily') ? 'مستوى الأداء (5 = ممتاز)' : 'متوسط التقييم';
+
+                currentChart = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: labelText,
+                            data: chartData.data,
+                            backgroundColor: (chartType === 'bar')
+                                ? 'rgba(166, 76, 166, 0.7)'
+                                : 'rgba(106, 27, 154, 0.5)',
+                            borderColor: 'rgba(106, 27, 154, 1)',
+                            borderWidth: 2,
+                            tension: (chartType === 'line') ? 0.3 : 0,
+                            fill: (chartType === 'line')
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 5.2,
+                                title: { display: true, text: 'التقييم' }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'تحليل أداء الطفل: ' + chartData.child_name,
+                                font: { size: 16 }
+                            }
+                        },
+                        rtl: true
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('❌ Error loading chart:', error);
+                document.getElementById('chart-container').style.opacity = '1';
+                document.getElementById('no-data-message').textContent =
+                    error.error || "تعذر جلب بيانات الرسم البياني.";
+                document.getElementById('no-data-message').style.display = 'block';
+                if (currentChart) { currentChart.destroy(); currentChart = null; }
+            });
+    }
+</script>
+{% endblock %}

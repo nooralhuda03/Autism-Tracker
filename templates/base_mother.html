@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}لوحة الأم{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* 🎨 المتغيرات والألوان الأساسية للثيم الجديد */
+    :root {
+      --primary-lavender: #8E7DBE; /* لافندر - اللون الأساسي للأزرار */
+      --dark-text: #5C4F7D; /* بنفسجي غامق - للنصوص */
+      --accent-teal: #A6D8D6; /* أزرق سماوي - لون تمييز */
+    }
+
+    /* 💡 تطبيق التدرج اللوني الباستيلي على كامل الخلفية */
+    body {
+      direction: rtl;
+      /* التدرج اللوني الباستيلي الذي اخترته */
+      background: linear-gradient(to bottom right,
+          var(--accent-teal), /* أزرق سماوي ناعم */
+          #F4F8DE, /* أصفر باهت */
+          #F7CFD8, /* وردي فاتح جداً */
+          #E3D6C9); /* لون كريمي */
+      font-family: "Cairo", sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: var(--dark-text); /* لون النص الموحد */
+      background-attachment: fixed;
+    }
+
+    /* --- Sidebar Styles --- */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100%;
+      padding-top: 20px;
+      /* 💡 لون ثابت للشريط الجانبي */
+      background-color: var(--primary-lavender);
+      color: white;
+      box-shadow: -4px 0 10px rgba(0, 0, 0, 0.25);
+      z-index: 1000;
+      transition: all 0.3s;
+    }
+
+    .sidebar a {
+      color: white;
+      padding: 15px 20px;
+      text-decoration: none;
+      display: block;
+      font-size: 16px;
+      transition: background-color 0.3s;
+      border-radius: 5px;
+      margin: 5px 10px;
+    }
+
+    .sidebar a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    /* 💡 لون خاص لأزرار التقرير داخل الشريط الجانبي */
+    .sidebar .btn-primary {
+        background-color: #A6D8D6 !important;
+        border: none;
+        color: var(--dark-text);
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+    .sidebar .btn-primary:hover {
+        background-color: #C6E8E8 !important;
+    }
+
+    .sidebar .logo {
+      text-align: center;
+      padding: 10px 0 30px;
+      font-size: 24px;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      margin-bottom: 20px;
+    }
+
+    /* --- Main Content Styles --- */
+    .main-content {
+      margin-right: 250px;
+      padding: 40px 20px;
+      max-width: calc(100% - 250px);
+    }
+
+    /* Flash Messages Style */
+    .alert-flash {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1050;
+        width: auto;
+        min-width: 300px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 992px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: static;
+        }
+        .main-content {
+            margin-right: 0;
+            padding-top: 20px;
+        }
+        .sidebar .nav {
+            flex-direction: row !important;
+            justify-content: space-around;
+        }
+        .sidebar a {
+            padding: 10px 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+    }
+  </style>
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo">لوحة الأم </div>
+    <nav class="nav flex-column">
+      <a href="{{ url_for('mother_dashboard') }}"><i class="fas fa-home me-2"></i> لوحة التحكم الرئيسية</a>
+     {% if child is defined and child is not none %}
+          <a href="{{ url_for('mother_reports', child_id=child.child_id) }}" class="btn btn-primary">
+              <i class="fas fa-chart-line me-2"></i> تقارير {{ child.name }}
+          </a>
+      {% endif %}
+  </a>
+      <a href="{{ url_for('mother_update_info') }}"><i class="fas fa-user-edit me-2"></i> تعديل معلومات الأم</a>
+      <hr style="border-color: rgba(255, 255, 255, 0.3); margin: 15px 10px;">
+      <a href="{{ url_for('mother_logout') }}"><i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج</a>
+    </nav>
+  </div>
+
+  <div class="main-content">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show alert-flash" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

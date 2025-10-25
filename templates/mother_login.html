@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل دخول الأم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 🎨 الستايلات الأساسية (Pastel Theme) */
+        html, body {
+            /* تطبيق التدرج اللوني متعدد الألوان على كامل الخلفية */
+            background: linear-gradient(to bottom right,
+                #A6D8D6, /* أزرق سماوي ناعم */
+                #F4F8DE, /* أصفر باهت */
+                #F7CFD8, /* وردي فاتح جداً */
+                #E3D6C9); /* لون كريمي */
+            min-height: 100vh;
+            background-attachment: fixed;
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* بطاقة تسجيل الدخول (Form Card) */
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px; /* زوايا مدورة كبيرة */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* ظل عميق وأنيق */
+            max-width: 480px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .login-card h2 {
+            color: #5C4F7D; /* لون بنفسجي غامق للعناوين */
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        /* حقول الإدخال */
+        .input-group {
+            position: relative;
+            margin: 15px 0;
+            width: 100%;
+        }
+
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            right: 15px; /* وضع الرمز على اليمين للغة العربية */
+            transform: translateY(-50%);
+            color: #A6D8D6; /* لون الرمز */
+        }
+
+        input {
+            padding: 12px 40px 12px 15px; /* مسافة للرمز */
+            width: 80%;
+            border: 1px solid #D3BDE0; /* إطار بلون ناعم */
+            border-radius: 10px;
+            direction: rtl; /* اتجاه الكتابة من اليمين لليوزر والباسورد */
+            text-align: right;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #8E7DBE; /* التركيز بلون اللافندر الأساسي */
+            box-shadow: 0 0 0 1px #8E7DBE;
+            outline: none;
+        }
+
+        /* زر الدخول */
+        button {
+            background-color: #8E7DBE; /* لافندر - اللون الأساسي */
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 30px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(142, 125, 190, 0.4);
+        }
+
+        button:hover {
+            background-color: #7A69A3;
+        }
+
+        /* رسالة الخطأ */
+        .error {
+            color: #FF5A5A; /* أحمر واضح للخطأ */
+            font-weight: 600;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #FEE;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>تسجيل دخول الأم</h2>
+
+        {% if error_message %}
+        <p class="error">{{ error_message }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" name="user_name" placeholder="اسم المستخدم" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" placeholder="كلمة المرور" required>
+            </div>
+
+            <button type="submit">دخول</button>
+        </form>
+
+
+    </div>
+</body>
+</html>

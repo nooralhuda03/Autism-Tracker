@@ -1,0 +1,934 @@
+{% extends 'base_mother.html' %}
+{% block title %}تفاصيل الطفل | Mommy Dashboard{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+<style>
+  /* 🎨 تطبيق ثيم الباستيل على صفحة التفاصيل */
+
+  /* تعريف متغيرات الألوان لاستخدامها هنا */
+  :root {
+      --primary-lavender: #8E7DBE; /* لافندر */
+      --dark-text: #5C4F7D; /* بنفسجي غامق */
+      --accent-teal: #A6D8D6; /* أزرق سماوي */
+      --soft-yellow: #F4F8DE; /* أصفر ناعم */
+      --soft-pink: #F7CFD8; /* وردي ناعم */
+  }
+
+  .child-header {
+    /* 💡 تطبيق التدرج الباستيلي الموحد (لافندر وأزرق سماوي) */
+    background: linear-gradient(to right, var(--primary-lavender), var(--accent-teal));
+    color: white;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 10px rgba(142, 125, 190, 0.4);
+  }
+  .child-header h3 {
+    margin-bottom: 10px;
+  }
+
+  /* --- Tabs and Navigation --- */
+  .nav-tabs .nav-link.active {
+    /* 💡 خلفية نشطة فاتحة (أصفر باهت) */
+    background-color: var(--soft-yellow) !important;
+    color: var(--dark-text) !important; /* نص بنفسجي غامق */
+    font-weight: bold;
+    /* خط سفلي بلون اللافندر الأساسي */
+    border-bottom: 3px solid var(--primary-lavender) !important;
+    border-color: var(--primary-lavender) var(--primary-lavender) white !important;
+  }
+  .nav-tabs .nav-link {
+    color: var(--dark-text); /* لون النص غير النشط */
+    font-weight: 600;
+  }
+  .tab-content {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-top: 15px;
+  }
+
+  /* --- Form and Inputs (لتقييم اليوم) --- */
+  .form-label {
+    color: var(--dark-text);
+    font-weight: bold;
+  }
+  .btn-save {
+    /* 💡 زر الحفظ بنفس التدرج الباستيلي الموحد */
+    background: linear-gradient(to right, var(--primary-lavender), #A3CCDA);
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 10px 20px;
+    transition: all 0.3s;
+  }
+  .btn-save:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* --- Tables, Charts and Reports --- */
+  h5 {
+    color: var(--dark-text); /* لون العناوين الفرعية */
+    font-weight: bold;
+  }
+  #chart-title, h3 {
+    color: var(--dark-text) !important; /* توحيد ألوان العناوين */
+  }
+
+  /* تخصيص ألوان الجدول (التقييم اليومي) */
+  .table-bordered {
+    border-color: #E0E0E0 !important;
+  }
+  thead tr th {
+    background-color: var(--accent-teal);
+    color: var(--dark-text);
+    border-color: #A6D8D6 !important;
+  }
+
+  /* الألوان في الأقسام الأخرى (تحديث الألوان القديمة) */
+  /* الألوان القديمة كانت (6a1b9a و a64ca6 و d16ba5)، سنستبدلها بالألوان الجديدة */
+  .tab-pane h3 { color: var(--dark-text) !important; }
+  .tab-pane h5 { color: var(--dark-text) !important; }
+
+  /* تخصيص أزرار المواعيد */
+  .btn-outline-primary {
+    color: var(--primary-lavender);
+    border-color: var(--primary-lavender);
+  }
+  .btn-outline-primary:hover {
+    background-color: var(--primary-lavender);
+    color: white;
+  }
+  .save-btn {
+            background-color: #8E7DBE; /* لافندر - اللون الأساسي */
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 30px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(142, 125, 190, 0.4);
+        }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+  <div class="child-header">
+    <h3>🧸 {{ child.name }}</h3>
+    <p>العمر: {{ (date.today().year - child.BD.year) }} سنة</p>
+  </div>
+
+  <ul class="nav nav-tabs justify-content-center" id="childTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#eval" type="button"> التقييم اليومي</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#reports" type="button"> التقارير</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#meds" type="button"> الأدوية</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#appointments" type="button"> المواعيد</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- ✅ التقييم اليومي -->
+    <div class="tab-pane fade show active" id="eval">
+      <form method="POST" action="{{ url_for('save_child_rating', child_id=child.child_id) }}">
+
+
+      <!-- المحور 1 -->
+      <div class="section-card">
+        <h5> المحور 1: التواصل والانتباه</h5>
+        <table class="table table-bordered align-middle">
+          <thead>
+            <tr>
+              <th>السلوك</th>
+              <th>التقييم (1–5)</th>
+              <th>ملاحظات بسيطة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>يتواصل بالنظر (Eye Contact)</td>
+              <td class="rating">
+                <input type="radio" name="eye" value="1">1
+                <input type="radio" name="eye" value="2">2
+                <input type="radio" name="eye" value="3">3
+                <input type="radio" name="eye" value="4">4
+                <input type="radio" name="eye" value="5">5
+              </td>
+              <td><input class="note-input" type="text"></td>
+            </tr>
+            <tr>
+              <td>يستجيب لاسمه عند مناداته</td>
+              <td class="rating">
+                <input type="radio" name="name_call" value="1">1
+                <input type="radio" name="name_call" value="2">2
+                <input type="radio" name="name_call" value="3">3
+                <input type="radio" name="name_call" value="4">4
+                <input type="radio" name="name_call" value="5">5
+              </td>
+              <td><input class="note-input" type="text"></td>
+            </tr>
+            <tr>
+              <td>يحاول التعبير بالكلام أو الإشارة</td>
+              <td class="rating">
+                <input type="radio" name="express" value="1">1
+                <input type="radio" name="express" value="2">2
+                <input type="radio" name="express" value="3">3
+                <input type="radio" name="express" value="4">4
+                <input type="radio" name="express" value="5">5
+              </td>
+              <td><input class="note-input" type="text"></td>
+            </tr>
+            <tr>
+              <td>يتبع التعليمات البسيطة</td>
+              <td class="rating">
+                <input type="radio" name="follow_instr" value="1">1
+                <input type="radio" name="follow_instr" value="2">2
+                <input type="radio" name="follow_instr" value="3">3
+                <input type="radio" name="follow_instr" value="4">4
+                <input type="radio" name="follow_instr" value="5">5
+              </td>
+              <td><input class="note-input" type="text"></td>
+            </tr>
+            <tr>
+              <td>يشارك في الحوار أو يرد على الأسئلة</td>
+              <td class="rating">
+                <input type="radio" name="conversation" value="1">1
+                <input type="radio" name="conversation" value="2">2
+                <input type="radio" name="conversation" value="3">3
+                <input type="radio" name="conversation" value="4">4
+                <input type="radio" name="conversation" value="5">5
+              </td>
+              <td><input class="note-input" type="text"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="legend">
+          1 = نادر جدًا / لم يظهر، 2 = قليل، 3 = أحيانًا، 4 = غالبًا، 5 = دائمًا أو ممتاز.
+        </div>
+      </div>
+
+      <!-- المحور 2 -->
+      <div class="section-card">
+        <h5> المحور 2: التفاعل الاجتماعي</h5>
+        <table class="table table-bordered align-middle">
+          <thead>
+            <tr>
+              <th>السلوك</th>
+              <th>التقييم (1–5)</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>يتفاعل مع أفراد العائلة</td><td class="rating">
+              <input type="radio" name="family" value="1">1
+              <input type="radio" name="family" value="2">2
+              <input type="radio" name="family" value="3">3
+              <input type="radio" name="family" value="4">4
+              <input type="radio" name="family" value="5">5
+            </td><td><input class="note-input" type="text"></td></tr>
+
+            <tr><td>يبادر باللعب مع الآخرين</td><td class="rating">
+              <input type="radio" name="play" value="1">1
+              <input type="radio" name="play" value="2">2
+              <input type="radio" name="play" value="3">3
+              <input type="radio" name="play" value="4">4
+              <input type="radio" name="play" value="5">5
+            </td><td><input class="note-input" type="text"></td></tr>
+
+            <tr><td>يظهر مشاعر (ضحك، حماس، عناق)</td><td class="rating">
+              <input type="radio" name="emotion" value="1">1
+              <input type="radio" name="emotion" value="2">2
+              <input type="radio" name="emotion" value="3">3
+              <input type="radio" name="emotion" value="4">4
+              <input type="radio" name="emotion" value="5">5
+            </td><td><input class="note-input" type="text"></td></tr>
+
+            <tr><td>يتحمل الانتظار أو المشاركة</td><td class="rating">
+              <input type="radio" name="patience" value="1">1
+              <input type="radio" name="patience" value="2">2
+              <input type="radio" name="patience" value="3">3
+              <input type="radio" name="patience" value="4">4
+              <input type="radio" name="patience" value="5">5
+            </td><td><input class="note-input" type="text"></td></tr>
+
+            <tr><td>يقلّد أفعال الآخرين</td><td class="rating">
+              <input type="radio" name="imitate" value="1">1
+              <input type="radio" name="imitate" value="2">2
+              <input type="radio" name="imitate" value="3">3
+              <input type="radio" name="imitate" value="4">4
+              <input type="radio" name="imitate" value="5">5
+            </td><td><input class="note-input" type="text"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- المحور 3 -->
+      <div class="section-card">
+        <h5> المحور 3: السلوكيات التكرارية والتنظيم الذاتي</h5>
+        <table class="table table-bordered">
+          <thead><tr><th>السلوك</th><th>التقييم</th><th>ملاحظات</th></tr></thead>
+          <tbody>
+            <tr><td>حركات متكررة (رفرفة، دوران)</td><td class="rating"><input type="radio" name="repetitive" value="1">1<input type="radio" name="repetitive" value="2">2<input type="radio" name="repetitive" value="3">3<input type="radio" name="repetitive" value="4">4<input type="radio" name="repetitive" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>التمسك بالروتين / رفض التغيير</td><td class="rating"><input type="radio" name="routine" value="1">1<input type="radio" name="routine" value="2">2<input type="radio" name="routine" value="3">3<input type="radio" name="routine" value="4">4<input type="radio" name="routine" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>نوبات الغضب أو البكاء</td><td class="rating"><input type="radio" name="anger" value="1">1<input type="radio" name="anger" value="2">2<input type="radio" name="anger" value="3">3<input type="radio" name="anger" value="4">4<input type="radio" name="anger" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>القدرة على التهدئة بعد الانزعاج</td><td class="rating"><input type="radio" name="calm" value="1">1<input type="radio" name="calm" value="2">2<input type="radio" name="calm" value="3">3<input type="radio" name="calm" value="4">4<input type="radio" name="calm" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>الحساسية من الأصوات أو الأضواء</td><td class="rating"><input type="radio" name="sensitivity" value="1">1<input type="radio" name="sensitivity" value="2">2<input type="radio" name="sensitivity" value="3">3<input type="radio" name="sensitivity" value="4">4<input type="radio" name="sensitivity" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- المحور 4 -->
+      <div class="section-card">
+        <h5> المحور 4: العادات اليومية</h5>
+        <table class="table table-bordered">
+          <thead><tr><th>النشاط</th><th>التقييم</th><th>ملاحظات</th></tr></thead>
+          <tbody>
+            <tr><td>تناول الطعام بدون رفض</td><td class="rating"><input type="radio" name="eat" value="1">1<input type="radio" name="eat" value="2">2<input type="radio" name="eat" value="3">3<input type="radio" name="eat" value="4">4<input type="radio" name="eat" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>استخدام الحمام أو الحفاظ</td><td class="rating"><input type="radio" name="toilet" value="1">1<input type="radio" name="toilet" value="2">2<input type="radio" name="toilet" value="3">3<input type="radio" name="toilet" value="4">4<input type="radio" name="toilet" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>اللبس أو الترتيب بنفسه</td><td class="rating"><input type="radio" name="dress" value="1">1<input type="radio" name="dress" value="2">2<input type="radio" name="dress" value="3">3<input type="radio" name="dress" value="4">4<input type="radio" name="dress" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>ساعات النوم وجودته</td><td class="rating"><input type="radio" name="sleep" value="1">1<input type="radio" name="sleep" value="2">2<input type="radio" name="sleep" value="3">3<input type="radio" name="sleep" value="4">4<input type="radio" name="sleep" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+            <tr><td>الالتزام بالروتين اليومي</td><td class="rating"><input type="radio" name="daily" value="1">1<input type="radio" name="daily" value="2">2<input type="radio" name="daily" value="3">3<input type="radio" name="daily" value="4">4<input type="radio" name="daily" value="5">5</td><td><input class="note-input" type="text"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- المحور 5 -->
+      <div class="section-card">
+        <!-- المحور 5 -->
+<div class="section-card">
+  <h5> المحور 5: النشاط والتركيز</h5>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>النشاط</th>
+        <th>التقييم (1–5)</th>
+        <th>ملاحظات</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>يستطيع التركيز على مهمة لأكثر من 5 دقائق</td>
+        <td class="rating">
+          <input type="radio" name="focus" value="1">1
+          <input type="radio" name="focus" value="2">2
+          <input type="radio" name="focus" value="3">3
+          <input type="radio" name="focus" value="4">4
+          <input type="radio" name="focus" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>يبدي اهتمامًا بالألعاب أو الأنشطة الجديدة</td>
+        <td class="rating">
+          <input type="radio" name="interest" value="1">1
+          <input type="radio" name="interest" value="2">2
+          <input type="radio" name="interest" value="3">3
+          <input type="radio" name="interest" value="4">4
+          <input type="radio" name="interest" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>ينهي المهام أو الأنشطة التي بدأها</td>
+        <td class="rating">
+          <input type="radio" name="complete" value="1">1
+          <input type="radio" name="complete" value="2">2
+          <input type="radio" name="complete" value="3">3
+          <input type="radio" name="complete" value="4">4
+          <input type="radio" name="complete" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>ينتقل من نشاط لآخر بسهولة</td>
+        <td class="rating">
+          <input type="radio" name="switch_activity" value="1">1
+          <input type="radio" name="switch_activity" value="2">2
+          <input type="radio" name="switch_activity" value="3">3
+          <input type="radio" name="switch_activity" value="4">4
+          <input type="radio" name="switch_activity" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>يتعاون أثناء النشاط دون تشتّت</td>
+        <td class="rating">
+          <input type="radio" name="cooperation" value="1">1
+          <input type="radio" name="cooperation" value="2">2
+          <input type="radio" name="cooperation" value="3">3
+          <input type="radio" name="cooperation" value="4">4
+          <input type="radio" name="cooperation" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<!-- المحور 6 -->
+<div class="section-card">
+  <h5> المحور 6: العاطفة والسلوك العام</h5>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>السلوك</th>
+        <th>التقييم (1–5)</th>
+        <th>ملاحظات</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>يبدو سعيدًا أو مرتاحًا أغلب الوقت</td>
+        <td class="rating">
+          <input type="radio" name="happy" value="1">1
+          <input type="radio" name="happy" value="2">2
+          <input type="radio" name="happy" value="3">3
+          <input type="radio" name="happy" value="4">4
+          <input type="radio" name="happy" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>يتعامل بهدوء مع المواقف الجديدة</td>
+        <td class="rating">
+          <input type="radio" name="calm_new" value="1">1
+          <input type="radio" name="calm_new" value="2">2
+          <input type="radio" name="calm_new" value="3">3
+          <input type="radio" name="calm_new" value="4">4
+          <input type="radio" name="calm_new" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>يُظهر مشاعر التعاطف أو الحنان</td>
+        <td class="rating">
+          <input type="radio" name="empathy" value="1">1
+          <input type="radio" name="empathy" value="2">2
+          <input type="radio" name="empathy" value="3">3
+          <input type="radio" name="empathy" value="4">4
+          <input type="radio" name="empathy" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>يعبّر عن حزنه أو انزعاجه بشكل مناسب</td>
+        <td class="rating">
+          <input type="radio" name="sadness" value="1">1
+          <input type="radio" name="sadness" value="2">2
+          <input type="radio" name="sadness" value="3">3
+          <input type="radio" name="sadness" value="4">4
+          <input type="radio" name="sadness" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+      <tr>
+        <td>يتفاعل مع التوجيه أو التصحيح بشكل إيجابي</td>
+        <td class="rating">
+          <input type="radio" name="response" value="1">1
+          <input type="radio" name="response" value="2">2
+          <input type="radio" name="response" value="3">3
+          <input type="radio" name="response" value="4">4
+          <input type="radio" name="response" value="5">5
+        </td>
+        <td><input class="note-input" type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="text-center mt-4">
+  <button type="submit" class="save-btn"> حفظ التقييم</button>
+</div>
+      </div>
+    </form>
+    </div>
+
+    <!-- 📊 التقارير -->
+
+
+   <div class="tab-pane fade" id="reports">
+  <h3 class="text-center mb-5" style="color: #6a1b9a;">  مركز التقارير المتكامل</h3>
+
+  <div class="row">
+    <!-- العمود الأيسر -->
+    <div class="col-md-3 d-flex flex-column" style="min-height: 100%;">
+      <div class="card shadow-sm mb-4 p-3" style="border-radius: 10px; flex-grow: 1;">
+        <h5 style="color: #d16ba5;"><i class="fas fa-filter me-2"></i> نوع التقرير</h5>
+        <div class="list-group list-group-flush">
+          <a href="#" class="list-group-item list-group-item-action fw-bold active"
+            data-type="daily"
+            onclick="loadReportList('daily', this); return false;">
+            <i class="fas fa-sun me-2"></i> تقارير يومية
+          </a>
+          <a href="#" class="list-group-item list-group-item-action fw-bold"
+            data-type="weekly"
+            onclick="loadReportList('weekly', this); return false;">
+            <i class="fas fa-calendar-week me-2"></i> تقارير أسبوعية
+          </a>
+          <a href="#" class="list-group-item list-group-item-action fw-bold"
+            data-type="monthly"
+            onclick="loadReportList('monthly', this); return false;">
+            <i class="fas fa-calendar-alt me-2"></i> تقارير شهرية
+          </a>
+        </div>
+      </div>
+
+      <h5 class="mt-4" style="color: #d16ba5;"><i class="fas fa-list me-2"></i> التقارير المتاحة</h5>
+      <div class="list-group flex-grow-1" id="report-items-list">
+        <div class="p-3 text-muted border rounded">الرجاء اختيار نوع تقرير...</div>
+      </div>
+    </div>
+
+    <!-- العمود الأيمن -->
+    <div class="col-md-9 d-flex flex-column">
+      <div class="card shadow p-4 rounded flex-grow-1" style="border-radius: 10px; height: 100%;">
+        <h4 id="chart-title" style="color: #a64ca6;">الرجاء اختيار تقرير</h4>
+        <hr>
+
+        <div id="chart-container" style="position: relative; min-height: 500px; height: 500px;">
+          <canvas id="myReportChart"></canvas>
+        </div>
+
+        <div id="no-data-message" class="alert alert-warning text-center mt-3" style="display: none;">
+          لا توجد بيانات متوفرة لهذا التقرير أو الفترة.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+    <!-- 💊 الأدوية -->
+   <div class="tab-pane fade" id="meds">
+  <div class="mt-4">
+    <h5 class="text-center mb-4" style="color:#6a1b9a;"> الأدوية الحالية</h5>
+    {% if medicines %}
+      <ul class="list-group">
+        {% for med in medicines %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><strong>{{ med.medicine_name }}</strong> - {{ med.dosage }} ملغ</span>
+            <span class="badge bg-light text-dark">{{ med.time_per_day }} مرة/يوم</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-info text-center">لا توجد أدوية حالياً لهذا الطفل.</div>
+    {% endif %}
+  </div>
+</div>
+
+    <!-- 📅 المواعيد -->
+    <div class="tab-pane fade" id="appointments">
+  <div class="mt-4">
+
+    <h5 class="text-center mb-4" style="color:#6a1b9a;"> المواعيد القادمة (المحجوزة)</h5>
+    {% if appointments and appointments|length > 0 %}
+      <ul class="list-group" id="booked-appointments-list"> <!-- 🎯 تم إضافة ID -->
+        {% for app in appointments %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <!-- الكود الصحيح الآن -->
+<strong>{{ app.day_of_week }} - {{ app.time }}</strong><br>
+              <small class="text-muted">
+                الطبيب: {{ app.doctor.name if app.doctor else 'غير معروف' }}
+              </small>
+            </div>
+            {% if app.status == 'available' %}
+              <span class="badge bg-success">متاح</span>
+            {% elif app.status == 'booked' %}
+              <span class="badge bg-warning text-dark">محجوز</span>
+            {% elif app.status == 'completed' %}
+              <span class="badge bg-secondary">مكتمل</span>
+            {% elif app.status == 'canceled' %}
+              <span class="badge bg-danger">ملغي</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-light text-center" id="no-booked-appointments-msg">لا توجد مواعيد محجوزة حالياً.</div> <!-- 🎯 تم إضافة ID -->
+    {% endif %}
+
+    <hr class="my-4">
+
+    <h5 class="text-center mb-4" style="color:#a64ca6;"> مواعيد متاحة للحجز</h5>
+
+    <!-- ⚠️ هذا هو العنصر الذي يجب أن يستهدفه الـ JS لجلب المواعيد -->
+    <div id="appointments-container">
+       <div class="p-3 text-muted text-center">جاري تحميل المواعيد المتاحة...</div>
+    </div>
+
+  </div>
+</div>
+<!-- نهاية المواعيد -->
+
+
+
+  </div>
+</div>
+<script>
+let currentChart = null;
+
+    // ✅ أخذ child_id من Flask مباشرة
+    let currentChildId = {{ child.child_id | tojson if child else 'null' }};
+    let currentReportType = 'daily';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("✅ Loaded doctor report page for child_id:", currentChildId);
+
+        if (currentChildId) {
+            // تحميل التقارير اليومية مباشرة
+            loadReportList(currentReportType, document.querySelector('[data-type="daily"]'));
+        } else {
+            document.getElementById('chart-title').textContent = "لا يوجد أطفال مسجلون.";
+        }
+    });
+
+    // ----------------------------------------
+    // دالة جلب قائمة التقارير
+    // ----------------------------------------
+    function loadReportList(reportType, element) {
+        currentReportType = reportType;
+
+        document.querySelectorAll('.list-group-item-action').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        const listContainer = document.getElementById('report-items-list');
+        listContainer.innerHTML = '<div class="p-3 text-center text-info"><i class="fas fa-spinner fa-spin me-2"></i> جاري التحميل...</div>';
+
+        if (!currentChildId) {
+            listContainer.innerHTML = '<div class="p-3 text-muted border rounded">يجب اختيار طفل أولاً.</div>';
+            return;
+        }
+
+        // ✅ جلب التقارير الخاصة بالطفل
+        fetch(`/api/report/list/${reportType}?child_id=${currentChildId}`)
+            .then(response => response.json())
+            .then(data => {
+                listContainer.innerHTML = '';
+                document.getElementById('chart-title').textContent = data.title;
+
+                if (!data.items || data.items.length === 0) {
+                    listContainer.innerHTML = '<div class="p-3 text-muted border rounded">لا توجد تقارير مسجلة في هذه الفترة.</div>';
+                    if (currentChart) { currentChart.destroy(); currentChart = null; }
+                    return;
+                }
+
+                data.items.forEach(item => {
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.className = 'list-group-item list-group-item-action report-link';
+                    link.textContent = item.title;
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        loadReportChart(reportType, item.id, item.child_id, link);
+                    };
+                    listContainer.appendChild(link);
+                });
+
+                // عرض أول تقرير تلقائيًا
+                const firstLink = listContainer.querySelector('a');
+                if (firstLink) {
+                    loadReportChart(reportType, data.items[0].id, data.items[0].child_id, firstLink);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error loading report list:', error);
+                listContainer.innerHTML = '<div class="p-3 text-danger border rounded">حدث خطأ أثناء تحميل القائمة.</div>';
+            });
+    }
+
+    // ----------------------------------------
+    // دالة تحميل بيانات التقرير وعرضها بالرسم البياني
+    // ----------------------------------------
+    function loadReportChart(reportType, reportId, childId, linkElement) {
+        document.querySelectorAll('.report-link').forEach(el => el.classList.remove('active-item'));
+        linkElement.classList.add('active-item');
+
+        document.getElementById('no-data-message').style.display = 'none';
+        document.getElementById('chart-title').textContent = linkElement.textContent;
+        document.getElementById('chart-container').style.opacity = '0.5';
+
+        fetch(`/api/report/data/${reportType}/${reportId}/${childId}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => Promise.reject(data));
+                }
+                return response.json();
+            })
+            .then(chartData => {
+                document.getElementById('chart-container').style.opacity = '1';
+                if (currentChart) currentChart.destroy();
+
+                const ctx = document.getElementById('myReportChart').getContext('2d');
+                const chartType = (reportType === 'daily') ? 'bar' : 'line';
+                const labelText = (reportType === 'daily') ? 'مستوى الأداء (5 = ممتاز)' : 'متوسط التقييم';
+
+                currentChart = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: labelText,
+                            data: chartData.data,
+                            backgroundColor: (chartType === 'bar')
+                                ? 'rgba(166, 76, 166, 0.7)'
+                                : 'rgba(106, 27, 154, 0.5)',
+                            borderColor: 'rgba(106, 27, 154, 1)',
+                            borderWidth: 2,
+                            tension: (chartType === 'line') ? 0.3 : 0,
+                            fill: (chartType === 'line')
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 5.2,
+                                title: { display: true, text: 'التقييم' }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'تحليل أداء الطفل: ' + chartData.child_name,
+                                font: { size: 16 }
+                            }
+                        },
+                        rtl: true
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('❌ Error loading chart:', error);
+                document.getElementById('chart-container').style.opacity = '1';
+                document.getElementById('no-data-message').textContent =
+                    error.error || "تعذر جلب بيانات الرسم البياني.";
+                document.getElementById('no-data-message').style.display = 'block';
+                if (currentChart) { currentChart.destroy(); currentChart = null; }
+            });
+    }
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('childReportChart');
+    fetch(`/api/child/report/{{ child.child_id }}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || data.data.length === 0) {
+          document.getElementById('no-data-msg').style.display = 'block';
+          return;
+        }
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: 'مستوى الأداء',
+              data: data.data,
+              borderColor: '#a64ca6',
+              backgroundColor: 'rgba(166,76,166,0.2)',
+              tension: 0.3
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      });
+  });
+</script>
+<script>
+    // 💡 توحيد تعريف المتغير لمرة واحدة في الـ Global Scope
+    const currentChildId = '{{ child.child_id | string if child.child_id is defined and child.child_id is not none else "null" }}';
+    let currentChart = null; // للمخططات البيانية
+    let currentReportType = 'daily';
+</script>
+
+<!-- 2. 🚀 كتلة JavaScript خاصة بالمواعيد فقط (باستخدام fetch) -->
+<!--2. 🚀 كتلة JavaScript خاصة بالمواعيد فقط (باستخدام fetch)-->
+<script>
+// ----------------------------------------
+// 1. دالة معالجة الحجز (تُرسل الطلب إلى Flask)
+// يجب أن تكون هذه الدالة مُعرَّفة في النطاق العام لتكون متاحة
+// ----------------------------------------
+function handleBooking(appointmentId, childId, buttonElement) {
+    if (!appointmentId || !childId) {
+        console.error("Error: Appointment or child information is missing.");
+        return;
+    }
+
+    buttonElement.disabled = true;
+    buttonElement.textContent = "جاري الحجز...";
+
+    // حفظ العنصر الأب للموعد المتاح لكي نحذفه لاحقاً
+    const listItemToRemove = buttonElement.closest('.list-group-item');
+
+    fetch('/api/appointment/book', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            appointment_id: appointmentId,
+            child_id: childId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => Promise.reject(data));
+        }
+        return response.json();
+    })
+    .then(data => {
+
+        // 1. 🗑️ الإزالة من قائمة المتاحين (الجزء السفلي) - هذا يعمل بالفعل
+        if (listItemToRemove) {
+            listItemToRemove.remove();
+        }
+
+        // 2. ✨ إنشاء عنصر جديد للموعد المحجوز
+        const newBookedItem = document.createElement('li');
+        newBookedItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        newBookedItem.innerHTML = `
+            <div>
+                <strong>${data.appointment.day} - ${data.appointment.time}</strong><br>
+                <small class="text-muted">
+                    الطبيب: ${data.appointment.doctor_name || 'غير معروف'}
+                </small>
+            </div>
+            <span class="badge bg-warning text-dark">محجوز</span>
+        `;
+
+        // 3. ➕ منطق الإضافة إلى قائمة المواعيد القادمة (الجزء العلوي)
+
+        // استهداف العناصر بالـ ID التي تم التأكد من وجودها في HTML الآن
+        let bookedListContainer = document.getElementById('booked-appointments-list');
+        const noAppointmentsMsg = document.getElementById('no-booked-appointments-msg');
+
+        if (bookedListContainer) {
+            // الحالة أ: القائمة موجودة (كان فيها مواعيد سابقة)، فقط نضيف إليها
+            bookedListContainer.appendChild(newBookedItem);
+        } else if (noAppointmentsMsg) {
+            // الحالة ب: القائمة غير موجودة (فقط رسالة "لا توجد مواعيد")
+
+            // 1. إنشاء الـ <ul> الجديدة
+            const newUl = document.createElement('ul');
+            newUl.className = 'list-group';
+            newUl.id = 'booked-appointments-list';
+            newUl.appendChild(newBookedItem);
+
+            // 2. استبدال رسالة "لا توجد مواعيد" بالقائمة الجديدة
+            // ⚠️ نستخدم parentNode.replaceChild لاستبدال العنصر بالكامل
+            noAppointmentsMsg.parentNode.replaceChild(newUl, noAppointmentsMsg);
+
+        } else {
+             // الحالة ج: فشل العثور على أي عنصر (خطأ في IDs)
+             console.error("❌ FATAL UI ERROR: Cannot find booked-appointments-list or no-booked-appointments-msg.");
+             // بما أن التحديث تم في DB، نعيد تحميل الصفحة كحل احتياطي آمن
+             window.location.reload();
+        }
+
+        console.log("تم تحديث الواجهة بنجاح:", data.message);
+    })
+    .catch(error => { // 💡 هذا هو الجزء الذي كان ناقصاً في الدالة
+        console.error("❌ Error during booking:", error);
+
+        // في حالة الخطأ: نعيد تفعيل الزر ونضع رسالة خطأ
+        const errorMessage = error.error || 'حدث خطأ غير معروف.';
+        if (listItemToRemove) {
+             // إعادة العنصر للعرض مع رسالة خطأ مؤقتة
+             listItemToRemove.innerHTML = `<span class="text-danger">❌ فشل الحجز: ${errorMessage}</span>`;
+             // إعادة تحميل القائمة المتاحة بعد ثواني
+             setTimeout(() => window.location.reload(), 3000);
+        }
+    });
+}
+
+// ----------------------------------------
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 💡 استخدام المتغير المُعرَّف في الكتلة الأولى (currentChildId)
+    const childId = currentChildId;
+
+    if (childId === 'null' || childId === '') {
+        console.error("⚠️ Child ID is missing. Cannot fetch appointments.");
+        return;
+    }
+
+    // ----------------------------------------
+    // (أ) جلب المواعيد المتاحة (الـ Fetch الأصلي)
+    // ----------------------------------------
+    const fetchUrl = `/api/appointments/available/${childId}`;
+    console.log("📡 Fetch URL (Appointments):", fetchUrl);
+
+    fetch(fetchUrl)
+    .then(res => {
+      if (!res.ok) throw new Error('Network response was not ok');
+      return res.json();
+    })
+    .then(data => {
+      const container = document.getElementById('appointments-container');
+
+      if (!container) return console.error("⚠️ عنصر appointments-container غير موجود في الصفحة.");
+      console.log("📦 البيانات الراجعة (المواعيد):", data);
+
+      if (data.items && data.items.length > 0) {
+        const list = document.createElement('ul');
+        list.className = 'list-group';
+
+        data.items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+            // 1. إنشاء الزر كعنصر DOM
+            const bookButton = document.createElement('button');
+            bookButton.className = 'btn btn-sm btn-outline-primary book-btn';
+            bookButton.textContent = 'احجز';
+
+            // 2. 🔑 الربط الفوري بالدالة عند الإنشاء
+            bookButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                // نمرر ID الموعد و ID الطفل وعنصر الزر نفسه
+                handleBooking(item.id, childId, bookButton);
+            });
+
+            // إنشاء المحتوى النصي
+            const textSpan = document.createElement('span');
+            textSpan.innerHTML = `${item.day} - ${item.datetime || 'غير محدد'} (${item.doctor_name || 'طبيب'})`;
+
+
+            li.appendChild(textSpan);
+            li.appendChild(bookButton); // إضافة الزر إلى القائمة
+            list.appendChild(li);
+        });
+
+        container.innerHTML = '';
+        container.appendChild(list);
+      } else {
+        container.innerHTML = '<div class="alert alert-light">لا توجد مواعيد متاحة حالياً.</div>';
+      }
+    })
+    .catch(err => {
+      console.error("❌ خطأ أثناء تحميل المواعيد:", err);
+      document.getElementById('appointments-container').innerHTML =
+        '<div class="alert alert-danger">حدث خطأ أثناء تحميل المواعيد.</div>';
+    });
+});
+</script>
+
+{% endblock %}

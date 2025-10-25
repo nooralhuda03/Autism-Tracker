@@ -1,0 +1,296 @@
+{% extends 'base_doctor.html' %}
+{% block title %}Patient Overview{% endblock %}
+{% block head %}
+{{ super() }}
+<style>
+/* 🎨 الستايلات الجديدة (Pastel Rainbow Gradient) */
+
+body {
+    /* 💡 تطبيق التدرج اللوني متعدد الألوان (اللافندر والأزرق والأخضر) */
+    /* التدرج يبدأ من الزاوية العلوية اليسرى (to bottom right) */
+    background: linear-gradient(to bottom right,
+        #A6D8D6, /* أزرق سماوي/أخضر ناعم */
+        #F4F8DE, /* أصفر باهت */
+        #F7CFD8, /* وردي فاتح جداً */
+        #E3D6C9); /* لون كريمي */
+    min-height: 100vh;
+    background-attachment: fixed; /* للتأكد من أن التدرج يغطي الشاشة بالكامل */
+}
+
+.dashboard-header h4 {
+    color: #5C4F7D; /* لون داكن للعناوين لضمان التباين */
+    font-weight: bold;
+}
+
+.card-box {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* ظل واضح */
+    border-top: 5px solid #8E7DBE; /* شريط علوي بلون لافندر مميز */
+}
+
+/* 🎯 الأزرار الرئيسية - تطبيق اللون الأساسي */
+.btn-main {
+    background-color: #8E7DBE; /* لافندر */
+    color: white;
+    border: none;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.btn-main:hover {
+    background-color: #7A69A3;
+    color: white;
+}
+
+.table-dark {
+    /* لون داكن لرأس الجدول (Headers) */
+    background-color: #5C4F7D !important;
+    border-color: #5C4F7D !important;
+}
+
+/* 💡 تخصيص ألوان الـ Badges للحالات */
+/* حالة الموعد المحجوز (Waiting) */
+.badge.bg-warning {
+    background-color: #A6D8D6 !important; /* أزرق مخضر ناعم */
+    color: #4A5A59 !important; /* نص داكن للقراءة */
+    font-weight: bold;
+}
+
+/* حالة الموعد المكتمل (Success) */
+.badge.bg-success {
+    background-color: #BDE3B4 !important; /* أخضر ناعم للمكتمل */
+    color: #3C6634 !important;
+}
+
+.form-control {
+    border-radius: 8px;
+    border-color: #D3BDE0;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="dashboard-header">
+    <h4>Patient Overview</h4>
+    <div>
+      <a href="{{ url_for('add_child_page') }}" class="btn btn-main me-2">
+        Add New Child
+      </a>
+      <a href="{{ url_for('manage_schedule') }}" class="btn btn-outline-dark">
+        Manage Schedule
+      </a>
+    </div>
+  </div>
+
+  <p class="text-muted">Manage patients and appointments</p>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="card-box">
+        <h5>Total Patients</h5>
+        <h2>{{ total_patients or 0 }}</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card-box">
+        <h5>Waiting Patients (Today)</h5>
+        <h2>{{ waiting_patients or 0 }}</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card-box">
+        <h5>Seen Today</h5>
+        <h2>{{ seen_today or 0 }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎯 الفلاتر الجديدة (البحث وتبديل مواعيد اليوم) -->
+  <div class="row mb-3 align-items-center">
+      <div class="col-md-8">
+          <input type="text" id="patientSearch" class="form-control" placeholder="ابحث عن مريض بالاسم..." onkeyup="filterAppointments()">
+      </div>
+      <div class="col-md-4 d-flex align-items-center justify-content-end">
+          <label class="form-check-label me-3 text-muted" for="filterTodaySwitch">
+              مرضى اليوم فقط
+          </label>
+          <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="filterTodaySwitch" onchange="filterAppointments()">
+          </div>
+      </div>
+  </div>
+
+  {% if children %}
+  <div class="table-responsive">
+      <table class="table table-hover table-bordered mt-4" id="patientTable">
+          <thead class="table-dark">
+          <tr>
+              <th>الاسم</th>
+              <th>تاريخ الميلاد</th>
+              <th>الجنس</th>
+              <th>المستوى</th>
+              <th>حالة الموعد</th> <!-- 🎯 عمود جديد -->
+              <th>الإجراءات</th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for child in children %}
+              <!-- 💡 إضافة data-attributes للفلترة وللإكمال -->
+              <tr data-child-id="{{ child.child_id }}"
+                  data-appointment-today="{{ 'true' if child.has_appointment_today else 'false' }}"
+                  data-appointment-status="{{ child.appointment_status or 'N/A' }}">
+
+                  <td onclick="navigateToDetails('{{ child.child_id }}')">{{ child.name }}</td>
+                  <td onclick="navigateToDetails('{{ child.child_id }}')">{{ child.BD.strftime('%Y-%m-%d') if child.BD else 'N/A' }}</td>
+                  <td onclick="navigateToDetails('{{ child.child_id }}')">{{ 'Male' if child.gender == 'male' else 'Female' }}</td>
+                  <td onclick="navigateToDetails('{{ child.child_id }}')">{{ child.level }}</td>
+
+                  <!-- 🎯 عرض الحالة الحالية -->
+                  <td class="appointment-status-cell">
+                      {% if child.appointment_status == 'booked' %}
+                          <span class="badge bg-warning text-dark appointment-status-label">محجوز اليوم</span>
+                      {% elif child.appointment_status == 'completed' %}
+                          <span class="badge bg-success appointment-status-label">مكتمل</span>
+                      {% else %}
+                          <span class="badge bg-secondary appointment-status-label">لا يوجد موعد</span>
+                      {% endif %}
+                  </td>
+
+                  <td>
+                      <div class="d-flex align-items-center justify-content-start">
+                          <a href="{{ url_for('doctor_child_details', child_id=child.child_id) }}" class="btn btn-sm btn-main me-2" style="padding: 5px 10px;">عرض</a>
+
+                          <!-- 🎯 زر التبديل لإكمال الموعد -->
+                          {% if child.appointment_status == 'booked' %}
+                              <div class="form-check form-switch complete-switch-container">
+                                  <input class="form-check-input complete-switch" type="checkbox"
+                                         id="completeSwitch-{{ child.child_id }}"
+                                         data-child-id="{{ child.child_id }}"
+                                         onchange="completeAppointment(this)">
+                                  <label class="form-check-label" for="completeSwitch-{{ child.child_id }}">
+                                      إكمال
+                                  </label>
+                              </div>
+                          {% endif %}
+                      </div>
+                  </td>
+              </tr>
+          {% endfor %}
+          </tbody>
+      </table>
+  </div>
+  {% else %}
+      <div class="empty-state">
+          <h5>No patients yet</h5>
+          <p>Click "Add New Child" to get started</p>
+      </div>
+  {% endif %}
+</div>
+    <script>
+        // دالة للمرور إلى صفحة التفاصيل (عند الضغط على الصف)
+        function navigateToDetails(childId) {
+            window.location.href = `{{ url_for('doctor_child_details', child_id='0') }}`.replace('0', childId);
+        }
+
+        // ----------------------------------------
+        // 1. منطق الفلترة المدمجة (بحث بالاسم + فلترة مواعيد اليوم)
+        // ----------------------------------------
+        function filterAppointments() {
+            const searchInput = document.getElementById("patientSearch");
+            const appointmentFilterChecked = document.getElementById('filterTodaySwitch').checked;
+
+            const filterText = searchInput.value.toUpperCase();
+            const table = document.getElementById('patientTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const row = tr[i];
+                const nameCell = row.getElementsByTagName('td')[0]; // عمود الاسم
+
+                // 1. فلترة مواعيد اليوم (يعتمد على data-appointment-today من Flask)
+                const hasAppointmentToday = row.getAttribute('data-appointment-today') === 'true';
+                let passesAppointmentFilter = !appointmentFilterChecked || hasAppointmentToday;
+
+                // 2. فلترة البحث بالاسم
+                let passesNameFilter = true;
+                if (nameCell) {
+                    const txtValue = nameCell.textContent || nameCell.innerText;
+                    passesNameFilter = (txtValue.toUpperCase().indexOf(filterText) > -1);
+                }
+
+                // العرض إذا مر بكلتا الفلترتين
+                if (passesAppointmentFilter && passesNameFilter) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            }
+        }
+
+        // ----------------------------------------
+        // 2. إكمال الموعد (AJAX)
+        // ----------------------------------------
+        function completeAppointment(checkbox) {
+            const childId = checkbox.getAttribute('data-child-id');
+            const row = checkbox.closest('tr'); // الصف الذي يحتوي على المريض
+
+            // نرسل الطلب فقط إذا تم تحديد الخيار (لإكمال الموعد)
+            if (!checkbox.checked) {
+                // منع الرجوع عن الإكمال بمجرد الضغط (لتبسيط المنطق)
+                checkbox.checked = true;
+                return;
+            }
+
+            // إرسال طلب AJAX إلى مسار Flask
+            fetch('/api/appointment/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ child_id: childId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => Promise.reject(data));
+                }
+                return response.json();
+            })
+            .then(data => {
+                // النجاح: تحديث حالة الواجهة
+                const statusCell = row.querySelector('.appointment-status-cell');
+                const switchContainer = row.querySelector('.complete-switch-container');
+
+                if (statusCell) {
+                    // تحديث الحالة إلى "مكتمل"
+                    statusCell.innerHTML = `<span class="badge bg-success appointment-status-label">مكتمل</span>`;
+                }
+                if (switchContainer) {
+                    // إزالة زر التبديل
+                    switchContainer.remove();
+                }
+
+                // تحديث الـ data-attribute للفلترة (لن يظهر في فلترة المحجوزين)
+                row.setAttribute('data-appointment-status', 'completed');
+                row.setAttribute('data-appointment-today', 'false'); // لم يعد موعد اليوم
+
+                alert(data.message);
+            })
+            .catch(error => {
+                // الفشل: إعادة حالة التبديل إلى false وإظهار رسالة خطأ
+                checkbox.checked = false;
+                alert(`فشل إكمال الموعد: ${error.error || 'حدث خطأ غير معروف.'}`);
+                console.error('Error completing appointment:', error);
+            });
+        }
+
+        // ----------------------------------------
+        // 3. التهيئة عند تحميل الصفحة
+        // ----------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+             // ربط الفلترة عند التحميل الأولي
+             filterAppointments();
+        });
+    </script>
+{% endblock %}

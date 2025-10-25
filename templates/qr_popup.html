@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code</title>
+    <style>
+        body { font-family: sans-serif; background: rgba(0,0,0,0.5); text-align: center; margin-top: 100px; color: white; }
+        .popup { display: inline-block; background: white; color: black; padding: 30px; border-radius: 15px; }
+        img { width: 200px; height: 200px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="popup">
+        <h2>Child "{{ child_name }}" Added Successfully!</h2>
+        <p>Mother can scan this QR to login:</p>
+        <img src="data:image/png;base64,{{ qr_data }}" alt="QR Code">
+        <p><a href="{{ url_for('doctor_dashboard') }}">Back to Dashboard</a></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends 'base_doctor.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Doctor Schedule</h3>
+
+  {% if schedules %}
+  <table class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in schedules %}
+      <tr>
+        <td>{{ s.day_of_week }}</td>
+        <td>{{ s.start_time.strftime("%H:%M") }}</td>
+        <td>{{ s.end_time.strftime("%H:%M") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No schedule found. Add your available days below:</p>
+  {% endif %}
+
+  <form method="POST" class="mt-4">
+    <div class="mb-3">
+      <label>Day of Week</label>
+      <select name="day_of_week" class="form-control" required>
+        <option>Sunday</option>
+        <option>Monday</option>
+        <option>Tuesday</option>
+        <option>Wednesday</option>
+        <option>Thursday</option>
+        <option>Friday</option>
+        <option>Saturday</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label>Start Time</label>
+      <input type="time" name="start_time" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>End Time</label>
+      <input type="time" name="end_time" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Schedule</button>
+  </form>
+</div>
+{% endblock %}
