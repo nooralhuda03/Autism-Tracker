@@ -6,102 +6,130 @@
   <title>Doctor Registration</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <style>
-    body {
-      background: linear-gradient(135deg, #b3e5fc, #fff59d);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Poppins', sans-serif;
-    }
+<style>
+  /* 🎨 تطبيق ثيم الباستيل الموحد على نموذج البطاقة البيضاء */
 
-    .glass-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 520px;
-      border-top: 4px solid #42a5f5;
-      border-bottom: 4px solid #fdd835;
-    }
+  /* تعريف متغيرات الألوان */
+  :root {
+      --primary-lavender: #8E7DBE; /* لافندر - اللون الأساسي */
+      --dark-text: #5C4F7D; /* بنفسجي غامق - للنصوص */
+      --accent-teal: #A6D8D6; /* أزرق سماوي */
+      --soft-yellow: #F4F8DE; /* أصفر باهت */
+      --soft-pink: #F7CFD8; /* وردي ناعم */
+  }
 
-    h2 {
-      text-align: center;
-      color: #1565c0;
-      font-weight: 600;
-      margin-bottom: 25px;
-    }
+  html, body {
+    /* تطبيق التدرج اللوني الباستيلي على كامل الخلفية */
+    background: linear-gradient(135deg,
+        var(--accent-teal),
+        var(--soft-yellow),
+        var(--soft-pink));
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+  }
 
-    .form-control {
-      background-color: rgba(255, 255, 255, 0.9);
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px 15px;
-    }
+  /* 🎯 البطاقة البيضاء الأنيقة (تحل محل glass-card) */
+  .glass-card {
+    background-color: white; /* خلفية بيضاء صلبة */
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* ظل عميق وأنيق */
+    width: 100%;
+    /* 💡 زيادة العرض الأقصى لاستيعاب الجدول الزمني */
+    max-width: 600px;
+  }
 
-    .form-control:focus {
-      border-color: #42a5f5;
-      box-shadow: 0 0 0 0.2rem rgba(66, 165, 245, 0.25);
-    }
+  h2 {
+    text-align: center;
+    color: var(--dark-text); /* لون بنفسجي غامق للعناوين */
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
 
-    .btn-register {
-      background: linear-gradient(90deg, #42a5f5, #fdd835);
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      width: 100%;
-      color: #fff;
-      font-weight: 600;
-      transition: 0.3s;
-    }
+  /* --- Form Controls --- */
+  .form-control {
+    background-color: white;
+    border: 1px solid #D3BDE0; /* إطار ناعم */
+    border-radius: 10px;
+    padding: 12px 15px;
+  }
 
-    .btn-register:hover {
-      background: linear-gradient(90deg, #1e88e5, #fbc02d);
-      transform: scale(1.02);
-    }
+  .form-control:focus {
+    border-color: var(--primary-lavender);
+    box-shadow: 0 0 0 0.2rem rgba(142, 125, 190, 0.25); /* ظل لافندر ناعم */
+  }
 
-    label {
-      font-weight: 500;
-      color: #37474f;
-    }
+  /* 🎯 زر التسجيل الموحد */
+  .btn-register {
+    background: var(--primary-lavender); /* لافندر موحد */
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    width: 100%;
+    color: #fff;
+    font-weight: 600;
+    transition: 0.3s;
+    box-shadow: 0 4px 10px rgba(142, 125, 190, 0.4);
+  }
 
-    .puzzle {
-      text-align: center;
-      margin-bottom: 15px;
-    }
+  .btn-register:hover {
+    background: #7A69A3;
+    transform: scale(1.02);
+  }
 
-    .puzzle span {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      margin: 0 3px;
-      border-radius: 3px;
-    }
+  label {
+    font-weight: 500;
+    color: var(--dark-text);
+  }
 
-    .blue { background-color: #42a5f5; }
-    .yellow { background-color: #fdd835; }
-    .red { background-color: #ef5350; }
-    .green { background-color: #66bb6a; }
+  /* 💡 تعديل ألوان قطع البازل لتتوافق مع الثيم */
+  .puzzle {
+    text-align: center;
+    margin-bottom: 15px;
+  }
 
-    .schedule-section {
-      background: rgba(255,255,255,0.8);
-      border-radius: 10px;
-      padding: 15px;
-      margin-top: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
+  .puzzle span {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin: 0 3px;
+    border-radius: 3px;
+  }
 
-    .schedule-day {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #fafafa;
-    }
-  </style>
+  .blue { background-color: var(--primary-lavender); }
+  .yellow { background-color: var(--soft-yellow); }
+  .red { background-color: var(--soft-pink); }
+  .green { background-color: var(--accent-teal); }
+
+  /* --- Schedule Section (الجدول الزمني) --- */
+  .schedule-section {
+    background: var(--soft-yellow); /* خلفية صفراء ناعمة للجدول */
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .schedule-day {
+    /* 💡 تحسين مظهر أيام الجدول */
+    border: 1px solid #D3BDE0;
+    border-radius: 12px; /* زوايا مدورة أكثر */
+    padding: 15px; /* زيادة التباعد الداخلي */
+    margin-bottom: 15px;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex; /* لتنظيم العناصر في صف واحد */
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>
+
+
+
 </head>
 <body>
 

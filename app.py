@@ -185,7 +185,7 @@ def manage_schedule():
     doctor_id = session.get('doctor_id')
     if not doctor_id:
         return redirect(url_for('doctor_login'))
-
+    doctor = DoctorRegister.query.get(doctor_id)
     if request.method == 'POST':
         day_of_week = request.form['day_of_week']
         start_time = request.form['start_time']
@@ -247,7 +247,8 @@ def manage_schedule():
 
     # عرض الجداول الحالية
     schedules = DoctorSchedule.query.filter_by(doctor_id=doctor_id).all()
-    return render_template('manage_schedule.html', schedules=schedules)
+    return render_template('manage_schedule.html',doctor_name=doctor.name,
+        specialty=doctor.specialty, schedules=schedules)
 
 @app.route('/doctor_dashboard')
 def doctor_dashboard():
@@ -322,7 +323,8 @@ def doctor_dashboard():
 
 @app.route('/doctor/child_details/<int:child_id>', methods=['GET', 'POST'])
 def doctor_child_details(child_id):
-
+    doctor_id = session.get('doctor_id')
+    doctor = DoctorRegister.query.get(doctor_id)
     # 1. التحقق من جلسة الطبيب
     if 'doctor_name' not in session:
         flash("الرجاء تسجيل الدخول كطبيب.", "danger")
@@ -352,7 +354,8 @@ def doctor_child_details(child_id):
         return redirect(url_for('doctor_child_details', child_id=child_id))
 
     # 5. عرض القالب (GET Request)
-    return render_template('doctor_child_details.html',
+    return render_template('doctor_child_details.html',doctor_name=doctor.name,
+        specialty=doctor.specialty,
                            child=child,
                            medicines=medicines,
                            reviews=doctor_reviews)
@@ -757,14 +760,16 @@ def api_report_data(report_type, report_id, child_id):
 
 @app.route('/doctor/reports/<int:child_id>')
 def doctor_reports(child_id):
-
+    doctor_id = session.get('doctor_id')
+    doctor = DoctorRegister.query.get(doctor_id)
     has_access, child, error_msg = check_user_access(child_id)
     if not has_access or 'doctor_id' not in session:
         flash(error_msg or "غير مصرح لك بالوصول لبيانات هذا الطفل.", "danger")
         return redirect(url_for('doctor_dashboard'))
 
     # 2. نحتاج فقط لتمرير كائن الطفل لـ HTML
-    return render_template('doctor_report.html', child=child)  # نمرر child وليس children
+    return render_template('doctor_report.html', child=child,doctor_name=doctor.name,
+        specialty=doctor.specialty)  # نمرر child وليس children
 
 @app.route('/doctor/add_prescription/<int:child_id>', methods=['GET', 'POST'])
 def add_prescription(child_id):
@@ -902,7 +907,6 @@ def api_book_appointment():
 
 @app.route('/api/appointments/available/<int:child_id>')
 def get_available_appointments(child_id):
-    print(123)
     try:
 
         # 🔹 نجيب كل الـ doctor_id المرتبطين بهذا الطفل من الجدول الوسيط
@@ -912,7 +916,6 @@ def get_available_appointments(child_id):
             .all()
         )
         doctor_ids = [d[0] for d in doctor_ids]  # تحويل النتيجة إلى قائمة عادية
-        print(1234)
         if not doctor_ids:
             return jsonify({"error": "لا يوجد أطباء مرتبطين بهذا الطفل."}), 404
 
@@ -939,7 +942,6 @@ def get_available_appointments(child_id):
                 "doctor_name": app.doctor.name if app.doctor else "غير معروف",
                 "status": app.status
             })
-        print(items)
 
         return jsonify({"items": items})
 
@@ -960,10 +962,8 @@ def complete_appointment():
         data = request.get_json()
         child_id = data.get('child_id')
         doctor_id = session.get('doctor_id')  # نحتاج Doctor ID للفلترة
-
         if not child_id or not doctor_id:
             return jsonify({"error": "مُعرّف الطفل أو الطبيب مطلوب."}), 400
-
         # 1. 🎯 البحث عن سجل الحجز (ChildAppointment) الأحدث لهذا الطفل
         booking_record = (
             db.session.query(ChildAppointment)
@@ -973,13 +973,10 @@ def complete_appointment():
             .order_by(ChildAppointment.created_at.desc())
             .first()
         )
-
         if not booking_record:
             return jsonify({"error": "لم يتم العثور على سجل حجز لهذا الطفل."}), 404
-
         # 2. جلب وتحديث حالة الموعد الأصلي (DoctorAppointment)
         appointment = DoctorAppointment.query.get(booking_record.appointment_id)
-
         # 3. 🛡️ شروط التحقق من الصلاحية (موقعها الصحيح)
         if appointment.doctor_id != doctor_id:
             return jsonify({"error": "هذا الموعد لا يخص الطبيب الحالي."}), 403
@@ -1005,7 +1002,7 @@ def complete_appointment():
         db.session.rollback()
         print(f"❌ DB FAILED TO COMPLETE APPOINTMENT: {e}")
         return jsonify({"error": f"حدث خطأ داخلي أثناء إكمال الموعد: {str(e)}"}), 500
-
+ 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000,debug=True)

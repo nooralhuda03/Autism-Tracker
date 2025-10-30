@@ -74,24 +74,8 @@
                 <a href="{{ url_for('doctor_reports', child_id=child.child_id) }}"
    target="_blank"
    class="btn btn-main mb-3">
-    View Dynamic Charts (Mom's Data) <i class="fas fa-external-link-alt ms-2"></i>
+    View Dynamic Charts  <i class="fas fa-external-link-alt ms-2"></i>
 </a>
-                <h6 class="mt-3">Previous Doctor Summaries:</h6>
-                {% if reviews %}
-                    <div class="list-group">
-                        {% for review in reviews %}
-                        <div class="list-group-item list-group-item-action flex-column align-items-start">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1 text-danger">Report Type: {{ review.report_type }}</h6>
-                                <small class="text-muted">{{ review.created_time.strftime('%Y-%m-%d %H:%M') }}</small>
-                            </div>
-                            <p class="mb-1">{{ review.note or 'No detailed note provided.' }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-warning mt-3">No formal doctor review reports found.</div>
-                {% endif %}
 
             </div>
         </div>

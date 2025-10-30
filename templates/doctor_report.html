@@ -26,9 +26,13 @@
 {% block content %}
 <div class="dashboard-container">
     <h3 class="text-center mb-5" style="color: #6a1b9a;">مركز التقارير المتكامل 📊</h3>
-
+     <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>📋 Patient Details: {{ child.name }}</h4>
+        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-secondary">
+            &larr; Back to Dashboard
+        </a>
+    </div>
     <div class="row">
-        <!-- العمود الأيسر (أنواع التقارير) -->
         <div class="col-md-3">
             <div class="card shadow-sm mb-4 p-3" style="border-radius: 10px;">
                 <h5 style="color: #d16ba5;"><i class="fas fa-filter me-2"></i> نوع التقرير</h5>
